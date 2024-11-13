@@ -1,5 +1,6 @@
 import express from "express";
 import connectionPool from "./utils/db.mjs";
+import { validateQuestionData } from "./middlewares/questionValidation.mjs";
 
 const app = express();
 const port = 4000;
@@ -54,7 +55,7 @@ app.get("/questions/:id", async (req, res) => {
 });
 
 // Post question
-app.post("/questions", async (req, res) => {
+app.post("/questions", [validateQuestionData], async (req, res) => {
   try {
     const newQuestion = { ...req.body };
 
@@ -80,7 +81,7 @@ app.post("/questions", async (req, res) => {
 });
 
 // Update question
-app.put("/questions/:id", async (req, res) => {
+app.put("/questions/:id", [validateQuestionData], async (req, res) => {
   try {
     const questionIdFromClient = req.params.id;
     const updatedQuestion = { ...req.body };
@@ -97,7 +98,7 @@ app.put("/questions/:id", async (req, res) => {
     }
 
     const sqlQuery =
-      "UPDATE questions SET title = $2, description = $3, category= $4 WHERE id = $1 RETURNING id";
+      "UPDATE questions SET title = $2, description = $3, category = $4 WHERE id = $1 RETURNING id";
 
     const values = [
       questionIdFromClient,
