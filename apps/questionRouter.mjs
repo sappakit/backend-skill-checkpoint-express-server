@@ -1,6 +1,11 @@
 import { Router } from "express";
 import connectionPool from "../utils/db.mjs";
-import { validateQuestionData } from "../middlewares/questionValidation.mjs";
+import {
+  validateQuestionData,
+  validateAnswerData,
+  validateVoteData,
+} from "../middlewares/questionValidation.mjs";
+import {} from "../middlewares/questionValidation.mjs";
 
 const questionRouter = Router();
 
@@ -187,5 +192,117 @@ questionRouter.delete("/:id", async (req, res) => {
     });
   }
 });
+
+// Get question answers
+questionRouter.get("/:questionId/answers", async (req, res) => {
+  try {
+    const questionIdFromClient = req.params.questionId;
+
+    const sqlQuery = `
+      SELECT questions.id, answers.content
+      FROM questions
+      INNER JOIN answers ON questions.id = answers.question_id
+      WHERE questions.id = $1
+    `;
+
+    const values = [questionIdFromClient];
+
+    const results = await connectionPool.query(sqlQuery, values);
+
+    if (results.rowCount === 0) {
+      return res.status(404).json({
+        message: "Question not found.",
+      });
+    }
+
+    return res.status(200).json({
+      data: results.rows,
+    });
+  } catch {
+    return res.status(500).json({
+      message: "Unable to fetch answers.",
+    });
+  }
+});
+
+// Post answer
+questionRouter.post(
+  "/:questionId/answers",
+  [validateAnswerData],
+  async (req, res) => {
+    try {
+      const questionIdFromClient = req.params.questionId;
+
+      const checkQuestionId = await connectionPool.query(
+        "SELECT * FROM questions WHERE id = $1",
+        [questionIdFromClient]
+      );
+
+      if (checkQuestionId.rowCount === 0) {
+        return res.status(404).json({
+          message: "Question not found.",
+        });
+      }
+
+      const { content } = req.body;
+
+      const sqlQuery = `
+        INSERT INTO answers (question_id, content)
+        VALUES ($1, $2)
+    `;
+
+      const values = [questionIdFromClient, content];
+
+      await connectionPool.query(sqlQuery, values);
+
+      return res.status(201).json({
+        message: "Answer created successfully.",
+      });
+    } catch {
+      return res.status(500).json({
+        message: "Unable to create answers.",
+      });
+    }
+  }
+);
+
+// Like/Dislike question
+questionRouter.post(
+  "/:questionId/vote",
+  [validateVoteData],
+  async (req, res) => {
+    try {
+      const questionIdFromClient = req.params.questionId;
+
+      const checkQuestionId = await connectionPool.query(
+        "SELECT * FROM question_votes WHERE question_id = $1",
+        [questionIdFromClient]
+      );
+
+      if (checkQuestionId.rowCount === 0) {
+        return res.status(404).json({
+          message: "Question not found.",
+        });
+      }
+
+      const { vote } = req.body;
+
+      const sqlQuery = `INSERT INTO question_votes (question_id, vote) VALUES ($1, $2)`;
+
+      const values = [questionIdFromClient, vote];
+
+      await connectionPool.query(sqlQuery, values);
+
+      return res.status(200).json({
+        message: "Vote on the question has been recorded successfully.",
+      });
+    } catch (e) {
+      console.log(e);
+      return res.status(500).json({
+        message: "Unable to vote question.",
+      });
+    }
+  }
+);
 
 export default questionRouter;
