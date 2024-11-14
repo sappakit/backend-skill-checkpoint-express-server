@@ -1,6 +1,6 @@
 import { Router } from "express";
 import connectionPool from "../utils/db.mjs";
-import { validateVoteData } from "../middlewares/questionValidation.mjs";
+import { validateVoteData } from "../middlewares/dataValidation.mjs";
 
 const answerRouter = Router();
 

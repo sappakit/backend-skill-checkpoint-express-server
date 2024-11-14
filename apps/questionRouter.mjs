@@ -4,8 +4,7 @@ import {
   validateQuestionData,
   validateAnswerData,
   validateVoteData,
-} from "../middlewares/questionValidation.mjs";
-import {} from "../middlewares/questionValidation.mjs";
+} from "../middlewares/dataValidation.mjs";
 
 const questionRouter = Router();
 

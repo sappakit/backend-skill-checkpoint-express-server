@@ -1,6 +1,7 @@
 export const validateQuestionData = (req, res, next) => {
   const questionData = { ...req.body };
 
+  // Require data validation
   if (!questionData.title) {
     return res.status(400).json({
       message: "Title is required",
@@ -17,6 +18,19 @@ export const validateQuestionData = (req, res, next) => {
     return res.status(400).json({
       message: "Category is required",
     });
+  }
+
+  // Type validation
+  if (typeof questionData.title !== "string") {
+    return res.status(400).json({ message: "Title must be a string" });
+  }
+
+  if (typeof questionData.description !== "string") {
+    return res.status(400).json({ message: "Description must be a string" });
+  }
+
+  if (typeof questionData.category !== "string") {
+    return res.status(400).json({ message: "Category must be a string" });
   }
 
   next();
