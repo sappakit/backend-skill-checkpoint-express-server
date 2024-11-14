@@ -21,6 +21,52 @@ questionRouter.get("/", async (req, res) => {
   }
 });
 
+// Get question by title or category
+questionRouter.get("/search", async (req, res) => {
+  try {
+    const title = req.query.title;
+    const category = req.query.category;
+
+    let sqlQuery = "SELECT * FROM questions";
+    const condition = [];
+    const values = [];
+
+    if (title) {
+      condition.push(
+        `(title ILIKE $${values.length + 1} OR description ILIKE $${
+          values.length + 1
+        })`
+      );
+      values.push(`%${title}%`);
+    }
+
+    if (category) {
+      condition.push(`category ILIKE $${values.length + 1}`);
+      values.push(`%${category}%`);
+    }
+
+    if (condition.length > 0) {
+      sqlQuery += " WHERE " + condition.join(" AND ");
+    }
+
+    const results = await connectionPool.query(sqlQuery, values);
+
+    if (results.rowCount === 0) {
+      return res.status(400).json({
+        message: "Invalid search parameters.",
+      });
+    }
+
+    return res.status(200).json({
+      data: results.rows,
+    });
+  } catch {
+    return res.status(500).json({
+      message: "Unable to fetch a question.",
+    });
+  }
+});
+
 // Get question by id
 questionRouter.get("/:id", async (req, res) => {
   try {
